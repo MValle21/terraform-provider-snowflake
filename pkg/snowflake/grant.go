@@ -2,6 +2,7 @@ package snowflake
 
 import (
 	"fmt"
+  "os"
 )
 
 type grantType string
@@ -182,6 +183,14 @@ func (ge *CurrentGrantExecutable) Grant(p string, w bool) string {
 
 // Revoke returns the SQL that will revoke privileges on the grant from the grantee
 func (ge *CurrentGrantExecutable) Revoke(p string) string {
+  if p == `OWNERSHIP` {
+    currentRole := os.Getenv(`SNOWFLAKE_ROLE`)
+
+    if currentRole != "" {
+      return fmt.Sprintf(`GRANT OWNERSHIP ON %v %v TO ROLE "%v" COPY CURRENT GRANTS`,
+        ge.grantType, ge.grantName, currentRole)
+    }
+  }
 	return fmt.Sprintf(`REVOKE %v ON %v %v FROM %v "%v"`,
 		p, ge.grantType, ge.grantName, ge.granteeType, ge.granteeName)
 }
